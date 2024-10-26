@@ -1,0 +1,37 @@
+{
+    "name": "dookery/websitedevelopment",
+    "description": "dookery website development",
+    "type": "library",
+    "require": {
+        "monolog/monolog": "^2.3",
+        "aws/aws-sdk-php": "^3.324",
+        "elasticsearch/elasticsearch": "^8.15",
+        "ext-amqp": "*",
+        "ext-mongodb": "*",
+        "graylog2/gelf-php": "*",
+        "mongodb/mongodb": "*",
+        "php-amqplib/php-amqplib": "*",
+        "rollbar/rollbar": "*",
+        "ruflin/elastica": "*",
+        "aws/aws-php-sns-message-validator": "*",
+        "doctrine/cache": "*",
+        "laminas/laminas-httphandlerrunner": "*"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Dookery\\Websitedevelopment\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ferret Fatale"
+        }
+    ],
+    "minimum-stability": "stable",
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}
