@@ -6,16 +6,17 @@
         "monolog/monolog": "^2.3",
         "aws/aws-sdk-php": "^3.324",
         "elasticsearch/elasticsearch": "^8.15",
+        "doctrine/couchdb": "^2.0",
         "ext-amqp": "*",
         "ext-mongodb": "*",
-        "graylog2/gelf-php": "*",
-        "mongodb/mongodb": "*",
-        "php-amqplib/php-amqplib": "*",
-        "rollbar/rollbar": "*",
-        "ruflin/elastica": "*",
-        "aws/aws-php-sns-message-validator": "*",
-        "doctrine/cache": "*",
-        "laminas/laminas-httphandlerrunner": "*"
+        "graylog2/gelf-php": "^2.0",
+        "mongodb/mongodb": "^1.8",
+        "php-amqplib/php-amqplib": "^3.0",
+        "rollbar/rollbar": "^4.0",
+        "ruflin/elastica": "^8.0",
+        "aws/aws-php-sns-message-validator": "^1.0",
+        "doctrine/cache": "^2.2",
+        "laminas/laminas-httphandlerrunner": "^2.11"
     },
     "license": "MIT",
     "autoload": {
@@ -28,7 +29,8 @@
             "name": "Ferret Fatale"
         }
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "alpha",
+    "prefer-stable": true,
     "config": {
         "allow-plugins": {
             "php-http/discovery": true
