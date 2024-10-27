@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /*
  * This file is part of the php-gelf package.
@@ -30,23 +29,53 @@ use InvalidArgumentException;
  */
 class TcpTransport extends AbstractTransport
 {
-    private const DEFAULT_HOST = "127.0.0.1";
-    private const DEFAULT_PORT = 12201;
-    private const AUTO_SSL_PORT = 12202;
+    const DEFAULT_HOST = "127.0.0.1";
+    const DEFAULT_PORT = 12201;
 
-    private StreamSocketClient $socketClient;
+    const AUTO_SSL_PORT = 12202;
 
+    /**
+     * @var string
+     */
+    protected $host;
+
+    /**
+     * @var int
+     */
+    protected $port;
+
+    /**
+     * @var StreamSocketClient
+     */
+    protected $socketClient;
+
+    /**
+     * @var SslOptions|null
+     */
+    protected $sslOptions = null;
+
+    /**
+     * Class constructor
+     *
+     * @param string|null     $host       when NULL or empty default-host is used
+     * @param int|null        $port       when NULL or empty default-port is used
+     * @param SslOptions|null $sslOptions when null not SSL is used
+     */
     public function __construct(
-        private string $host = self::DEFAULT_HOST,
-        private int $port = self::DEFAULT_PORT,
-        private ?SslOptions $sslOptions = null
+        $host = self::DEFAULT_HOST,
+        $port = self::DEFAULT_PORT,
+        SslOptions $sslOptions = null
     ) {
-        parent::__construct();
+        $this->host = $host;
+        $this->port = $port;
 
-        if ($port == self::AUTO_SSL_PORT && $this->sslOptions == null) {
-            $this->sslOptions = new SslOptions();
+        if ($port == self::AUTO_SSL_PORT && $sslOptions == null) {
+            $sslOptions = new SslOptions();
         }
 
+        $this->sslOptions = $sslOptions;
+
+        $this->setMessageEncoder(new DefaultEncoder());
         $this->socketClient = new StreamSocketClient(
             $this->getScheme(),
             $this->host,
@@ -56,25 +85,37 @@ class TcpTransport extends AbstractTransport
     }
 
     /**
-     * @inheritDoc
+     * Sends a Message over this transport
+     *
+     * @param Message $message
+     *
+     * @return int the number of TCP packets sent
      */
-    public function send(Message $message): int
+    public function send(Message $message)
     {
         $rawMessage = $this->getMessageEncoder()->encode($message) . "\0";
 
         // send message in one packet
-        return $this->socketClient->write($rawMessage);
+        $this->socketClient->write($rawMessage);
+
+        return 1;
     }
 
-    private function getScheme(): string
+    /**
+     * @return string
+     */
+    private function getScheme()
     {
         return null === $this->sslOptions ? 'tcp' : 'ssl';
     }
 
-    private function getContext(): array
+    /**
+     * @return array
+     */
+    private function getContext()
     {
         if (null === $this->sslOptions) {
-            return [];
+            return array();
         }
 
         return $this->sslOptions->toStreamContext($this->host);
@@ -82,21 +123,25 @@ class TcpTransport extends AbstractTransport
 
     /**
      * Sets the connect-timeout
+     *
+     * @param int $timeout
      */
-    public function setConnectTimeout(int $timeout): void
+    public function setConnectTimeout($timeout)
     {
         $this->socketClient->setConnectTimeout($timeout);
     }
 
     /**
      * Returns the connect-timeout
+     *
+     * @return int
      */
-    public function getConnectTimeout(): int
+    public function getConnectTimeout()
     {
         return $this->socketClient->getConnectTimeout();
     }
 
-    public function setMessageEncoder(EncoderInterface $encoder): static
+    public function setMessageEncoder(EncoderInterface $encoder)
     {
         if (!$encoder instanceof NoNullByteEncoderInterface) {
             throw new InvalidArgumentException(
@@ -104,7 +149,6 @@ class TcpTransport extends AbstractTransport
             );
         }
 
-        parent::setMessageEncoder($encoder);
-        return $this;
+        return parent::setMessageEncoder($encoder);
     }
 }

@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /*
  * This file is part of the php-gelf package.
@@ -14,6 +13,7 @@ namespace Gelf;
 
 use Gelf\Transport\TransportInterface;
 use Gelf\MessageValidator as DefaultMessageValidator;
+use SplObjectStorage as Set;
 use RuntimeException;
 
 /**
@@ -24,16 +24,27 @@ use RuntimeException;
  */
 class Publisher implements PublisherInterface
 {
-    private array $transports = [];
-    private MessageValidatorInterface $messageValidator;
+    /**
+     * @var Set
+     */
+    protected $transports;
+
+    /**
+     * @var MessageValidatorInterface
+     */
+    protected $messageValidator;
 
     /**
      * Creates a Publisher for GELF-messages.
+     *
+     * @param TransportInterface|null         $transport
+     * @param MessageValidatorInterface|null  $messageValidator
      */
     public function __construct(
-        ?TransportInterface $transport = null,
-        ?MessageValidatorInterface $messageValidator = null
+        TransportInterface $transport = null,
+        MessageValidatorInterface $messageValidator = null
     ) {
+        $this->transports = new Set();
         $this->messageValidator = $messageValidator
             ?: new DefaultMessageValidator();
 
@@ -43,9 +54,11 @@ class Publisher implements PublisherInterface
     }
 
     /**
-     * @inheritDoc
+     * Publish a message over all defined transports
+     *
+     * @param MessageInterface $message
      */
-    public function publish(MessageInterface $message): void
+    public function publish(MessageInterface $message)
     {
         if (count($this->transports) == 0) {
             throw new RuntimeException(
@@ -65,11 +78,13 @@ class Publisher implements PublisherInterface
     }
 
     /**
-     * Adds a transport object to the publisher.
+     * Adds a transport to the publisher.
+     *
+     * @param TransportInterface $transport
      */
-    public function addTransport(TransportInterface $transport): void
+    public function addTransport(TransportInterface $transport)
     {
-        $this->transports[spl_object_hash($transport)] = $transport;
+        $this->transports->attach($transport);
     }
 
     /**
@@ -77,15 +92,17 @@ class Publisher implements PublisherInterface
      *
      * @return TransportInterface[]
      */
-    public function getTransports(): array
+    public function getTransports()
     {
-        return array_values($this->transports);
+        return iterator_to_array($this->transports);
     }
 
     /**
      * Returns the current message validator.
+     *
+     * @return MessageValidatorInterface
      */
-    public function getMessageValidator(): MessageValidatorInterface
+    public function getMessageValidator()
     {
         return $this->messageValidator;
     }

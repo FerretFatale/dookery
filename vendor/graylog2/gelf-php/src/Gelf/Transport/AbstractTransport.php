@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /*
  * This file is part of the php-gelf package.
@@ -13,7 +12,6 @@ declare(strict_types=1);
 namespace Gelf\Transport;
 
 use Gelf\Encoder\EncoderInterface;
-use Gelf\Encoder\JsonEncoder;
 use Gelf\MessageInterface;
 use Gelf\PublisherInterface;
 
@@ -23,19 +21,22 @@ use Gelf\PublisherInterface;
  *
  * @author Benjamin Zikarsky <benjamin@zikarsky.de>
  */
-abstract class AbstractTransport implements TransportInterface
+abstract class AbstractTransport implements TransportInterface, PublisherInterface
 {
-    protected EncoderInterface $messageEncoder;
 
-    public function __construct(?EncoderInterface $messageEncoder = null)
-    {
-        $this->messageEncoder = $messageEncoder ?? new JsonEncoder();
-    }
+    /**
+     * @var EncoderInterface
+     */
+    protected $messageEncoder;
 
     /**
      * Sets a message encoder
+     *
+     * @param EncoderInterface $encoder
+     *
+     * @return $this
      */
-    public function setMessageEncoder(EncoderInterface $encoder): static
+    public function setMessageEncoder(EncoderInterface $encoder)
     {
         $this->messageEncoder = $encoder;
 
@@ -44,9 +45,27 @@ abstract class AbstractTransport implements TransportInterface
 
     /**
      * Returns the current message encoder
+     *
+     * @return EncoderInterface
      */
-    public function getMessageEncoder(): EncoderInterface
+    public function getMessageEncoder()
     {
         return $this->messageEncoder;
+    }
+
+    /**
+     * Alias to send() without return value
+     * Required to fulfill the PublisherInterface
+     *
+     * @deprecated deprecated since 1.1
+     * @codeCoverageIgnore
+     *
+     * @param MessageInterface $message
+     *
+     * @return int the number of bytes sent
+     */
+    public function publish(MessageInterface $message)
+    {
+        return $this->send($message);
     }
 }

@@ -18,12 +18,14 @@
 namespace MongoDB\Model;
 
 use Iterator;
+use MongoDB\BSON\Document;
 use MongoDB\Exception\InvalidArgumentException;
 use MongoDB\Exception\UnexpectedValueException;
 use ReturnTypeWillChange;
 
+use function assert;
 use function is_array;
-use function MongoDB\BSON\toPHP;
+use function is_int;
 use function sprintf;
 use function strlen;
 use function substr;
@@ -31,57 +33,26 @@ use function unpack;
 
 /**
  * Iterator for BSON documents.
+ *
+ * @template-implements Iterator<int, mixed>
  */
 class BSONIterator implements Iterator
 {
-    /** @var integer */
-    private static $bsonSize = 4;
+    private const BSON_SIZE = 4;
 
-    /** @var string */
-    private $buffer;
+    private string $buffer;
 
-    /** @var integer */
-    private $bufferLength;
+    private int $bufferLength;
 
-    /** @var mixed */
-    private $current;
+    /** @var array|object|null */
+    private $current = null;
 
-    /** @var integer */
-    private $key = 0;
+    private int $key = 0;
 
-    /** @var integer */
-    private $position = 0;
+    private int $position = 0;
 
-    /** @var array */
-    private $options;
-
-    /**
-     * Constructs a BSON Iterator.
-     *
-     * Supported options:
-     *
-     *  * typeMap (array): Type map for BSON deserialization.
-     *
-     * @internal
-     * @see https://php.net/manual/en/function.mongodb.bson-tophp.php
-     * @param string $data    Concatenated, valid, BSON-encoded documents
-     * @param array  $options Iterator options
-     * @throws InvalidArgumentException for parameter/option parsing errors
-     */
-    public function __construct(string $data, array $options = [])
-    {
-        if (isset($options['typeMap']) && ! is_array($options['typeMap'])) {
-            throw InvalidArgumentException::invalidType('"typeMap" option', $options['typeMap'], 'array');
-        }
-
-        if (! isset($options['typeMap'])) {
-            $options['typeMap'] = [];
-        }
-
-        $this->buffer = $data;
-        $this->bufferLength = strlen($data);
-        $this->options = $options;
-    }
+    /** @var array{typeMap: array, ...} */
+    private array $options;
 
     /**
      * @see https://php.net/iterator.current
@@ -95,7 +66,7 @@ class BSONIterator implements Iterator
 
     /**
      * @see https://php.net/iterator.key
-     * @return mixed
+     * @return int
      */
     #[ReturnTypeWillChange]
     public function key()
@@ -128,13 +99,39 @@ class BSONIterator implements Iterator
         $this->advance();
     }
 
-    /**
-     * @see https://php.net/iterator.valid
-     */
+    /** @see https://php.net/iterator.valid */
     #[ReturnTypeWillChange]
     public function valid(): bool
     {
         return $this->current !== null;
+    }
+
+    /**
+     * Constructs a BSON Iterator.
+     *
+     * Supported options:
+     *
+     *  * typeMap (array): Type map for BSON deserialization.
+     *
+     * @internal
+     * @see https://php.net/manual/en/function.mongodb.bson-tophp.php
+     * @param string $data    Concatenated, valid, BSON-encoded documents
+     * @param array  $options Iterator options
+     * @throws InvalidArgumentException for parameter/option parsing errors
+     */
+    public function __construct(string $data, array $options = [])
+    {
+        if (isset($options['typeMap']) && ! is_array($options['typeMap'])) {
+            throw InvalidArgumentException::invalidType('"typeMap" option', $options['typeMap'], 'array');
+        }
+
+        if (! isset($options['typeMap'])) {
+            $options['typeMap'] = [];
+        }
+
+        $this->buffer = $data;
+        $this->bufferLength = strlen($data);
+        $this->options = $options;
     }
 
     private function advance(): void
@@ -143,17 +140,18 @@ class BSONIterator implements Iterator
             return;
         }
 
-        if ($this->bufferLength - $this->position < self::$bsonSize) {
-            throw new UnexpectedValueException(sprintf('Expected at least %d bytes; %d remaining', self::$bsonSize, $this->bufferLength - $this->position));
+        if ($this->bufferLength - $this->position < self::BSON_SIZE) {
+            throw new UnexpectedValueException(sprintf('Expected at least %d bytes; %d remaining', self::BSON_SIZE, $this->bufferLength - $this->position));
         }
 
-        [, $documentLength] = unpack('V', substr($this->buffer, $this->position, self::$bsonSize));
+        [, $documentLength] = unpack('V', substr($this->buffer, $this->position, self::BSON_SIZE));
+        assert(is_int($documentLength));
 
         if ($this->bufferLength - $this->position < $documentLength) {
             throw new UnexpectedValueException(sprintf('Expected %d bytes; %d remaining', $documentLength, $this->bufferLength - $this->position));
         }
 
-        $this->current = toPHP(substr($this->buffer, $this->position, $documentLength), $this->options['typeMap']);
+        $this->current = Document::fromBSON(substr($this->buffer, $this->position, $documentLength))->toPHP($this->options['typeMap']);
         $this->position += $documentLength;
     }
 }

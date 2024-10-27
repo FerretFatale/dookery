@@ -4,7 +4,7 @@
         'pretty_version' => '1.0.0+no-version-set',
         'version' => '1.0.0.0',
         'reference' => null,
-        'type' => 'library',
+        'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
@@ -46,11 +46,20 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'doctrine/couchdb' => array(
+            'pretty_version' => '2.0.0-alpha1',
+            'version' => '2.0.0.0-alpha1',
+            'reference' => '0e46beddc4b1037929599b96b622506260655f17',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../doctrine/couchdb',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'dookery/websitedevelopment' => array(
             'pretty_version' => '1.0.0+no-version-set',
             'version' => '1.0.0.0',
             'reference' => null,
-            'type' => 'library',
+            'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
             'dev_requirement' => false,
@@ -74,9 +83,9 @@
             'dev_requirement' => false,
         ),
         'graylog2/gelf-php' => array(
-            'pretty_version' => '2.0.1',
-            'version' => '2.0.1.0',
-            'reference' => '29ef48fa6eac6c8787b588949483f1739c57ad4f',
+            'pretty_version' => '1.7.1',
+            'version' => '1.7.1.0',
+            'reference' => '8dceab86227c184725479cc36ab5cae4da940f6e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../graylog2/gelf-php',
             'aliases' => array(),
@@ -109,15 +118,6 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'jean85/pretty-package-versions' => array(
-            'pretty_version' => '2.0.6',
-            'version' => '2.0.6.0',
-            'reference' => 'f9fdd29ad8e6d024f52678b570e5593759b550b4',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../jean85/pretty-package-versions',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
         'laminas/laminas-httphandlerrunner' => array(
             'pretty_version' => '2.11.0',
             'version' => '2.11.0.0',
@@ -128,18 +128,18 @@
             'dev_requirement' => false,
         ),
         'mongodb/mongodb' => array(
-            'pretty_version' => '1.15.0',
-            'version' => '1.15.0.0',
-            'reference' => '3a681a3b2f2c0ebac227a3b86bb9057d0e6eb8f8',
+            'pretty_version' => '1.20.0',
+            'version' => '1.20.0.0',
+            'reference' => '75da9ea3b63d97b05e0e8648d8c09a17bc54c0b6',
             'type' => 'library',
             'install_path' => __DIR__ . '/../mongodb/mongodb',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
         'monolog/monolog' => array(
-            'pretty_version' => '2.9.3',
-            'version' => '2.9.3.0',
-            'reference' => 'a30bfe2e142720dfa990d0a7e573997f5d884215',
+            'pretty_version' => '3.7.0',
+            'version' => '3.7.0.0',
+            'reference' => 'f4393b648b78a5408747de94fca38beb5f7e9ef8',
             'type' => 'library',
             'install_path' => __DIR__ . '/../monolog/monolog',
             'aliases' => array(),
@@ -173,9 +173,9 @@
             'dev_requirement' => false,
         ),
         'paragonie/constant_time_encoding' => array(
-            'pretty_version' => 'v3.0.0',
-            'version' => '3.0.0.0',
-            'reference' => 'df1e7fde177501eee2037dd159cf04f5f301a512',
+            'pretty_version' => 'v2.7.0',
+            'version' => '2.7.0.0',
+            'reference' => '52a0d99e69f56b9ec27ace92ba56897fe6993105',
             'type' => 'library',
             'install_path' => __DIR__ . '/../paragonie/constant_time_encoding',
             'aliases' => array(),
@@ -259,8 +259,8 @@
         'psr/http-client-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0',
-                1 => '*',
+                0 => '*',
+                1 => '1.0',
             ),
         ),
         'psr/http-factory' => array(
@@ -275,8 +275,8 @@
         'psr/http-factory-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0',
-                1 => '*',
+                0 => '*',
+                1 => '1.0',
             ),
         ),
         'psr/http-message' => array(
@@ -291,8 +291,8 @@
         'psr/http-message-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0',
-                1 => '*',
+                0 => '*',
+                1 => '1.0',
             ),
         ),
         'psr/http-server-handler' => array(
@@ -305,9 +305,9 @@
             'dev_requirement' => false,
         ),
         'psr/log' => array(
-            'pretty_version' => '3.0.2',
-            'version' => '3.0.2.0',
-            'reference' => 'f16e1d5863e37f8d8c2a01719f5b34baa2b714d3',
+            'pretty_version' => '2.0.0',
+            'version' => '2.0.0.0',
+            'reference' => 'ef29f6d262798707a9edd554e2b82517ef3a9376',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/log',
             'aliases' => array(),
@@ -316,8 +316,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '3.0.0',
-                1 => '1.0.0 || 2.0.0 || 3.0.0',
+                0 => '~1.0',
+                1 => '3.0.0',
             ),
         ),
         'ralouphie/getallheaders' => array(
@@ -371,6 +371,15 @@
             'reference' => '60328e362d4c2c802a54fcbf04f9d3fb892b4cf8',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/polyfill-php80',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'symfony/polyfill-php81' => array(
+            'pretty_version' => 'v1.31.0',
+            'version' => '1.31.0.0',
+            'reference' => '4a4cfc2d253c21a5ad0e53071df248ed48c6ce5c',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-php81',
             'aliases' => array(),
             'dev_requirement' => false,
         ),

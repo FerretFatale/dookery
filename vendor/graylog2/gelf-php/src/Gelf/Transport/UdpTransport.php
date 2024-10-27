@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /*
  * This file is part of the php-gelf package.
@@ -15,7 +14,6 @@ namespace Gelf\Transport;
 use Gelf\MessageInterface as Message;
 use Gelf\Encoder\CompressedJsonEncoder as DefaultEncoder;
 use InvalidArgumentException;
-use LogicException;
 use RuntimeException;
 
 /**
@@ -29,17 +27,24 @@ use RuntimeException;
  */
 class UdpTransport extends AbstractTransport
 {
-    private const CHUNK_GELF_ID = "\x1e\x0f";
-    private const CHUNK_MAX_COUNT = 128; // as per GELF spec
-    private const CHUNK_HEADER_LENGTH = 12; // GELF ID (2b), id (8b) , sequence (2b)
-    
-    public const CHUNK_SIZE_LAN = 8154;
-    public const CHUNK_SIZE_WAN = 1420;
+    const CHUNK_GELF_ID = "\x1e\x0f";
+    const CHUNK_MAX_COUNT = 128; // as per GELF spec
+    const CHUNK_SIZE_LAN = 8154;
+    const CHUNK_SIZE_WAN = 1420;
+    const CHUNK_HEADER_LENGTH = 12; // GELF ID (2b), id (8b) , sequence (2b)
 
-    private const DEFAULT_HOST = "127.0.0.1";
-    private const DEFAULT_PORT = 12201;
-    
-    private StreamSocketClient $socketClient;
+    const DEFAULT_HOST = "127.0.0.1";
+    const DEFAULT_PORT = 12201;
+
+    /**
+     * @var int
+     */
+    protected $chunkSize;
+
+    /**
+     * @var StreamSocketClient
+     */
+    protected $socketClient;
 
     /**
      * Class constructor
@@ -50,17 +55,18 @@ class UdpTransport extends AbstractTransport
      *                          0 disables chunks completely
      */
     public function __construct(
-        string $host = self::DEFAULT_HOST,
-        int $port = self::DEFAULT_PORT,
-        private int $chunkSize = self::CHUNK_SIZE_WAN
+        $host = self::DEFAULT_HOST,
+        $port = self::DEFAULT_PORT,
+        $chunkSize = self::CHUNK_SIZE_WAN
     ) {
-        parent::__construct();
-
         // allow NULL-like values for fallback on default
         $host = $host ?: self::DEFAULT_HOST;
         $port = $port ?: self::DEFAULT_PORT;
 
         $this->socketClient = new StreamSocketClient('udp', $host, $port);
+        $this->chunkSize = $chunkSize;
+
+        $this->messageEncoder = new DefaultEncoder();
 
         if ($chunkSize > 0 && $chunkSize <= self::CHUNK_HEADER_LENGTH) {
             throw new InvalidArgumentException('Chunk-size has to exceed ' . self::CHUNK_HEADER_LENGTH
@@ -69,9 +75,13 @@ class UdpTransport extends AbstractTransport
     }
 
     /**
-     * @inheritDoc
+     * Sends a Message over this transport
+     *
+     * @param Message $message
+     *
+     * @return int the number of UDP packets sent
      */
-    public function send(Message $message): int
+    public function send(Message $message)
     {
         $rawMessage = $this->getMessageEncoder()->encode($message);
 
@@ -90,15 +100,17 @@ class UdpTransport extends AbstractTransport
 
     /**
      * Sends given string in multiple chunks
+     *
+     * @param string $rawMessage
+     * @return int
+     *
+     * @throws RuntimeException on too large messages which would exceed the
+     * maximum number of possible chunks
      */
-    private function sendMessageInChunks(string $rawMessage): int
+    protected function sendMessageInChunks($rawMessage)
     {
-        /** @var int<1, max> $length */
-        $length = $this->chunkSize - self::CHUNK_HEADER_LENGTH;
-
         // split to chunks
-        $chunks = str_split($rawMessage, $length);
-
+        $chunks = str_split($rawMessage, $this->chunkSize - self::CHUNK_HEADER_LENGTH);
         $numChunks = count($chunks);
 
         if ($numChunks > self::CHUNK_MAX_COUNT) {

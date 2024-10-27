@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /*
  * This file is part of the php-gelf package.
@@ -13,6 +12,7 @@ declare(strict_types=1);
 namespace Gelf\Transport;
 
 use RuntimeException;
+use ParagonIE\ConstantTime\Binary;
 
 /**
  * StreamSocketClient is a very simple OO-Wrapper around the PHP
@@ -23,17 +23,53 @@ use RuntimeException;
  */
 class StreamSocketClient
 {
-    private const DEFAULT_SOCKET_TIMEOUT = 30;
+    /**
+     * @deprecated deprecated since v1.4.0
+     */
+    const SOCKET_TIMEOUT = 30;
 
-    private mixed $socket = null;
-    private int $connectTimeout = self::DEFAULT_SOCKET_TIMEOUT;
+    /**
+     * @var string
+     */
+    protected $host;
 
-    public function __construct(
-        private string $scheme,
-        private string $host,
-        private int $port,
-        private array $context = []
-    ) {
+    /**
+     * @var integer
+     */
+    protected $port;
+
+    /**
+     * @var string
+     */
+    protected $scheme;
+
+    /**
+     * @var array
+     */
+    protected $context;
+
+    /**
+     * @var resource
+     */
+    protected $socket;
+
+    /**
+     * @var int
+     */
+    protected $connectTimeout = self::SOCKET_TIMEOUT;
+
+    /**
+     * @param string  $scheme
+     * @param string  $host
+     * @param integer $port
+     * @param array   $context
+     */
+    public function __construct($scheme, $host, $port, array $context = array())
+    {
+        $this->scheme = $scheme;
+        $this->host = $host;
+        $this->port = $port;
+        $this->context = $context;
     }
 
     /**
@@ -42,6 +78,51 @@ class StreamSocketClient
     public function __destruct()
     {
         $this->close();
+    }
+
+    /**
+     * Initializes socket-client
+     *
+     * @deprecated deprecated since v1.4.0
+     *
+     * @param string  $scheme  like "udp" or "tcp"
+     * @param string  $host
+     * @param integer $port
+     * @param array   $context
+     *
+     * @return resource
+     *
+     * @throws RuntimeException on connection-failure
+     */
+    protected static function initSocket($scheme, $host, $port, array $context)
+    {
+        $socketDescriptor = sprintf("%s://%s:%d", $scheme, $host, $port);
+        $socket = @stream_socket_client(
+            $socketDescriptor,
+            $errNo,
+            $errStr,
+            static::SOCKET_TIMEOUT,
+            \STREAM_CLIENT_CONNECT,
+            stream_context_create($context)
+        );
+
+        if ($socket === false) {
+            throw new RuntimeException(
+                sprintf(
+                    "Failed to create socket-client for %s: %s (%s)",
+                    $socketDescriptor,
+                    $errStr,
+                    $errNo
+                )
+            );
+        }
+
+        // set non-blocking for UDP
+        if (strcasecmp("udp", $scheme) == 0) {
+            stream_set_blocking($socket, 0);
+        }
+
+        return $socket;
     }
 
 
@@ -54,7 +135,7 @@ class StreamSocketClient
      *
      * @throws RuntimeException on connection-failure
      */
-    private function buildSocket(): mixed
+    private function buildSocket()
     {
         $socketDescriptor = sprintf(
             "%s://%s:%d",
@@ -85,7 +166,7 @@ class StreamSocketClient
 
         // set non-blocking for UDP
         if (strcasecmp("udp", $this->scheme) == 0) {
-            stream_set_blocking($socket, true);
+            stream_set_blocking($socket, 0);
         }
 
         return $socket;
@@ -96,7 +177,7 @@ class StreamSocketClient
      *
      * @return resource
      */
-    public function getSocket(): mixed
+    public function getSocket()
     {
         // lazy initializing of socket-descriptor
         if (!$this->socket) {
@@ -109,26 +190,32 @@ class StreamSocketClient
     /**
      * Writes a given string to the socket and returns the
      * number of written bytes
+     *
+     * @param string $buffer
+     *
+     * @return int
+     *
+     * @throws RuntimeException on write-failure
      */
-    public function write(string $buffer): int
+    public function write($buffer)
     {
-        $bufLen = strlen($buffer);
+        $buffer = (string) $buffer;
+        $bufLen = Binary::safeStrlen($buffer);
 
         $socket = $this->getSocket();
         $written = 0;
 
         while ($written < $bufLen) {
-            // PHP's fwrite does not behave nice in regard to errors, so we wrap
+            // PHP's fwrite does not behave nice in regards to errors, so we wrap
             // it with a temporary error handler and treat every warning/notice as
-            // an error
+            // a error
             $failed = false;
             $errorMessage = "Failed to write to socket";
-            /** @psalm-suppress InvalidArgument */
             set_error_handler(function ($errno, $errstr) use (&$failed, &$errorMessage) {
                 $failed = true;
                 $errorMessage .= ": $errstr ($errno)";
             });
-            $byteCount = fwrite($socket, substr($buffer, $written));
+            $byteCount = fwrite($socket, Binary::safeSubstr($buffer, $written));
             restore_error_handler();
 
             if ($byteCount === 0 && defined('HHVM_VERSION')) {
@@ -136,7 +223,7 @@ class StreamSocketClient
             }
 
             if ($failed || $byteCount === false) {
-                throw new RuntimeException($errorMessage);
+                throw new \RuntimeException($errorMessage);
             }
 
             $written += $byteCount;
@@ -148,8 +235,12 @@ class StreamSocketClient
 
     /**
      * Reads a given number of bytes from the socket
+     *
+     * @param integer $byteCount
+     *
+     * @return string
      */
-    public function read(int $byteCount): string
+    public function read($byteCount)
     {
         return fread($this->getSocket(), $byteCount);
     }
@@ -157,7 +248,7 @@ class StreamSocketClient
     /**
      * Closes underlying socket explicitly
      */
-    public function close(): void
+    public function close()
     {
         if (!is_resource($this->socket)) {
             return;
@@ -169,24 +260,30 @@ class StreamSocketClient
 
     /**
      * Checks if the socket is closed
+     *
+     * @return bool
      */
-    public function isClosed(): bool
+    public function isClosed()
     {
         return $this->socket === null;
     }
 
     /**
      * Returns the current connect-timeout
+     *
+     * @return int
      */
-    public function getConnectTimeout(): int
+    public function getConnectTimeout()
     {
         return $this->connectTimeout;
     }
 
     /**
      * Sets the connect-timeout
+     *
+     * @param int $timeout
      */
-    public function setConnectTimeout(int $timeout): void
+    public function setConnectTimeout($timeout)
     {
         if (!$this->isClosed()) {
             throw new \LogicException("Cannot change socket properties with an open connection");
@@ -197,16 +294,20 @@ class StreamSocketClient
 
     /**
      * Returns the stream context
+     *
+     * @return array
      */
-    public function getContext(): array
+    public function getContext()
     {
         return $this->context;
     }
 
     /**
      * Sets the stream context
+     *
+     * @param array $context
      */
-    public function setContext(array $context): void
+    public function setContext(array $context)
     {
         if (!$this->isClosed()) {
             throw new \LogicException("Cannot change socket properties with an open connection");

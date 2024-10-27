@@ -28,12 +28,10 @@ use MongoDB\Exception\UnsupportedException;
 use function current;
 use function is_array;
 use function is_string;
-use function MongoDB\server_supports_feature;
 
 /**
  * Operation for the explain command.
  *
- * @api
  * @see \MongoDB\Collection::explain()
  * @see https://mongodb.com/docs/manual/reference/command/explain/
  */
@@ -43,17 +41,11 @@ class Explain implements Executable
     public const VERBOSITY_EXEC_STATS = 'executionStats';
     public const VERBOSITY_QUERY = 'queryPlanner';
 
-    /** @var integer */
-    private static $wireVersionForAggregate = 7;
+    private string $databaseName;
 
-    /** @var string */
-    private $databaseName;
+    private Explainable $explainable;
 
-    /** @var Explainable */
-    private $explainable;
-
-    /** @var array */
-    private $options;
+    private array $options;
 
     /**
      * Constructs an explain command for explainable operations.
@@ -111,11 +103,7 @@ class Explain implements Executable
      */
     public function execute(Server $server)
     {
-        if ($this->explainable instanceof Aggregate && ! server_supports_feature($server, self::$wireVersionForAggregate)) {
-            throw UnsupportedException::explainNotSupported();
-        }
-
-        $cursor = $server->executeCommand($this->databaseName, $this->createCommand($server), $this->createOptions());
+        $cursor = $server->executeCommand($this->databaseName, $this->createCommand(), $this->createOptions());
 
         if (isset($this->options['typeMap'])) {
             $cursor->setTypeMap($this->options['typeMap']);
@@ -127,9 +115,9 @@ class Explain implements Executable
     /**
      * Create the explain command.
      */
-    private function createCommand(Server $server): Command
+    private function createCommand(): Command
     {
-        $cmd = ['explain' => $this->explainable->getCommandDocument($server)];
+        $cmd = ['explain' => $this->explainable->getCommandDocument()];
 
         foreach (['comment', 'verbosity'] as $option) {
             if (isset($this->options[$option])) {
@@ -158,14 +146,5 @@ class Explain implements Executable
         }
 
         return $options;
-    }
-
-    private function isFindAndModify(Explainable $explainable): bool
-    {
-        if ($explainable instanceof FindAndModify || $explainable instanceof FindOneAndDelete || $explainable instanceof FindOneAndReplace || $explainable instanceof FindOneAndUpdate) {
-            return true;
-        }
-
-        return false;
     }
 }

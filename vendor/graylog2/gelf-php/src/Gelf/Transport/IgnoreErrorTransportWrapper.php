@@ -1,32 +1,48 @@
 <?php
-declare(strict_types=1);
 
 namespace Gelf\Transport;
 
 use Gelf\MessageInterface as Message;
-use Throwable;
 
 /**
  * A wrapper for any AbstractTransport to ignore any kind of errors
  * @package Gelf\Transport
  */
-class IgnoreErrorTransportWrapper implements TransportInterface
+class IgnoreErrorTransportWrapper extends AbstractTransport
 {
-    private ?Throwable $lastError = null;
 
-    public function __construct(
-        private TransportInterface $transport
-    ) {
+    /**
+     * @var AbstractTransport
+     */
+    private $transport;
+
+    /**
+     * @var \Exception|null
+     */
+    private $lastError = null;
+
+    /**
+     * IgnoreErrorTransportWrapper constructor.
+     *
+     * @param AbstractTransport $transport
+     */
+    public function __construct(AbstractTransport $transport)
+    {
+        $this->transport = $transport;
     }
 
     /**
-     * @inheritDoc
+     * Sends a Message over this transport.
+     *
+     * @param Message $message
+     *
+     * @return int the number of bytes sent
      */
-    public function send(Message $message): int
+    public function send(Message $message)
     {
         try {
             return $this->transport->send($message);
-        } catch (Throwable $e) {
+        } catch (\Exception $e) {
             $this->lastError = $e;
             return 0;
         }
@@ -34,8 +50,9 @@ class IgnoreErrorTransportWrapper implements TransportInterface
 
     /**
      * Returns the last error
+     * @return \Exception|null
      */
-    public function getLastError(): ?Throwable
+    public function getLastError()
     {
         return $this->lastError;
     }

@@ -1,38 +1,62 @@
 <?php
-declare(strict_types=1);
 
 namespace Gelf\Transport;
 
-use Closure;
 use Gelf\MessageInterface as Message;
-use Throwable;
+use RuntimeException;
 
-class RetryTransportWrapper implements TransportInterface
+class RetryTransportWrapper extends AbstractTransport
 {
-    protected Closure $exceptionMatcher;
+    /**
+     * @const string
+     */
+    const NO_RESPONSE = "Graylog-Server didn't answer properly, expected 'HTTP/1.x 202 Accepted', response is ''";
+
+    /**
+     * @var TransportInterface
+     */
+    protected $transport;
+
+    /**
+     * @var int
+     */
+    protected $maxRetries;
+
+    /**
+     * @var callable|null
+     */
+    protected $exceptionMatcher;
 
     /**
      * KeepAliveRetryTransportWrapper constructor.
      *
-     * @param null|callable(Throwable):bool $exceptionMatcher
+     * @param TransportInterface $transport
+     * @param int $maxRetries
+     * @param callable(\Throwable):bool $exceptionMatcher
      */
-    public function __construct(
-        private TransportInterface $transport,
-        private int $maxRetries,
-        ?callable $exceptionMatcher = null
-    ) {
-        $this->exceptionMatcher = Closure::fromCallable($exceptionMatcher ?? fn (Throwable $_) => true);
+    public function __construct(TransportInterface $transport, $maxRetries, $exceptionMatcher = null)
+    {
+        $this->transport = $transport;
+        $this->maxRetries = $maxRetries;
+        $this->exceptionMatcher = $exceptionMatcher;
     }
 
-    public function getTransport(): TransportInterface
+    /**
+     * @return TransportInterface
+     */
+    public function getTransport()
     {
         return $this->transport;
     }
 
     /**
-     * @inheritDoc
+     * Sends a Message over this transport.
+     *
+     * @param Message $message
+     *
+     * @return int calls function to send message
      */
-    public function send(Message $message): int
+    public function send(Message $message)
     {
         $tries = 0;
 
@@ -40,12 +64,12 @@ class RetryTransportWrapper implements TransportInterface
             try {
                 $tries++;
                 return $this->transport->send($message);
-            } catch (Throwable $e) {
+            } catch (\Exception $e) {
                 if ($this->maxRetries !== 0 && $tries > $this->maxRetries) {
                     throw $e;
                 }
 
-                if (!call_user_func($this->exceptionMatcher, $e)) {
+                if ($this->exceptionMatcher && !call_user_func($this->exceptionMatcher, $e)) {
                     throw $e;
                 }
             }

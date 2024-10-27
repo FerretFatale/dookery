@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /*
  * This file is part of the php-gelf package.
@@ -25,23 +24,37 @@ use Gelf\MessageInterface as Message;
  */
 class AmqpTransport extends AbstractTransport
 {
-    public function __construct(
-        private AMQPExchange $exchange,
-        private AMQPQueue $queue
-    ) {
-        parent::__construct();
+    /**
+     * @var AMQPExchange $exchange
+     */
+    protected $exchange;
+
+    /**
+     * @var AMQPQueue $exchange
+     */
+    protected $queue;
+
+    /**
+     * @param AMQPExchange $exchange
+     * @param AMQPQueue $queue
+     */
+    public function __construct(AMQPExchange $exchange, AMQPQueue $queue)
+    {
+        $this->queue = $queue;
+        $this->exchange = $exchange;
+        $this->messageEncoder = new DefaultEncoder();
     }
 
     /**
      * @inheritdoc
      */
-    public function send(Message $message): int
+    public function send(Message $message)
     {
         $rawMessage = $this->getMessageEncoder()->encode($message);
 
-        $attributes = [
+        $attributes = array(
             'Content-type' => 'application/json'
-        ];
+        );
 
         // if queue is durable then mark message as 'persistent'
         if (($this->queue->getFlags() & AMQP_DURABLE) > 0) {

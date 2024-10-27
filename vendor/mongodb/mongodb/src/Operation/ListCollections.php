@@ -17,27 +17,25 @@
 
 namespace MongoDB\Operation;
 
+use Iterator;
 use MongoDB\Command\ListCollections as ListCollectionsCommand;
 use MongoDB\Driver\Exception\RuntimeException as DriverRuntimeException;
 use MongoDB\Driver\Server;
 use MongoDB\Exception\InvalidArgumentException;
+use MongoDB\Model\CollectionInfo;
 use MongoDB\Model\CollectionInfoCommandIterator;
-use MongoDB\Model\CollectionInfoIterator;
 
 /**
  * Operation for the listCollections command.
  *
- * @api
  * @see \MongoDB\Database::listCollections()
  * @see https://mongodb.com/docs/manual/reference/command/listCollections/
  */
 class ListCollections implements Executable
 {
-    /** @var string */
-    private $databaseName;
+    private string $databaseName;
 
-    /** @var ListCollectionsCommand */
-    private $listCollections;
+    private ListCollectionsCommand $listCollections;
 
     /**
      * Constructs a listCollections command.
@@ -74,7 +72,7 @@ class ListCollections implements Executable
      * Execute the operation.
      *
      * @see Executable::execute()
-     * @return CollectionInfoIterator
+     * @return Iterator<int, CollectionInfo>
      * @throws DriverRuntimeException for other driver errors (e.g. connection errors)
      */
     public function execute(Server $server)
