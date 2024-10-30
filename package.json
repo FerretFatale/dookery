@@ -1,0 +1,23 @@
+{
+  "name": "dookery",
+  "version": "1.0.0",
+  "description": "A project for Dookery website development",
+  "main": "index.js",
+  "scripts": {
+    "wp-env": "wp-env"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ferretfatale/dookery.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ferretfatale/dookery/issues"
+  },
+  "homepage": "https://github.com/ferretfatale/dookery#readme",
+  "devDependencies": {
+    "@wordpress/env": "^10.10.0"
+  }
+}

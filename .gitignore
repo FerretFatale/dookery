@@ -1,0 +1,73 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log
+package-lock.json
+
+# Composer (PHP dependencies)
+vendor/
+composer.phar
+composer.lock
+
+# Environment files
+*.env
+.env.*
+
+# WordPress
+wp-content/uploads/
+wp-content/upgrade/
+wp-config.php
+
+# WP-Env
+.wp-env.json
+wp-env.lock
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE and editor-specific files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Caches and build artifacts
+cache/
+tmp/
+*.tmp
+*.cache
+build/
+dist/
+coverage/
+
+# Ignore temporary and backup files
+*.pyc
+*.log
+*.bak
+*.tmp
+*.sh
+
+# Development logs and temp fils
+.DS_Store
+.vscode/
+*.log
+
+# Common theme files
+*.css.map
+*.scssc
+node_modules/
+*.min.js
+*.min.css
+
+# Build and Compilation Directories
+/public/
+/dist/
+
