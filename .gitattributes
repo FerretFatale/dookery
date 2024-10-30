@@ -1,0 +1,14 @@
+/demo export-ignore
+phpunit.xml.dist export-ignore
+/.github/ export-ignore
+
+# Composer-related files not essential for distribution
+composer.lock export-ignore
+composer.phar export-ignore
+composer-setup.php export-ignore
+
+# npm package-related files not essential for distribution
+package-lock.json export-ignore
+
+# Project-specific test or temporary files
+test.php export-ignore
